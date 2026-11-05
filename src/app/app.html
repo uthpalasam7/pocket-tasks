@@ -1,0 +1,171 @@
+<div class="app-shell">
+  <header class="site-header">
+    <a class="brand" href="#main" aria-label="Pocket Tasks, go to your tasks">
+      <span class="brand-icon" aria-hidden="true">✓</span
+      ><span>pocket tasks<span class="brand-dot">.</span></span>
+    </a>
+    <span class="header-note"><span aria-hidden="true">◉</span> A little space for your day</span>
+  </header>
+
+  <main id="main">
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">LESS MENTAL CLUTTER. MORE ROOM TO BREATHE.</p>
+      <h1 id="page-title">Small tasks.<br /><span>A lighter mind.</span></h1>
+      <p class="intro-copy">
+        Get it out of your head and into your pocket.<br class="desktop-break" />
+        One little checkmark at a time.
+      </p>
+    </section>
+
+    <section class="workspace" aria-label="Your personal task tracker">
+      <div class="task-panel">
+        <div class="panel-heading">
+          <h2>Your tasks</h2>
+          <span class="local-badge"><span aria-hidden="true">●</span> Just for you</span>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="addTask()" class="add-form">
+          <label for="task-title">What’s on your mind?</label>
+          <div class="input-row">
+            <input
+              #titleInput
+              id="task-title"
+              formControlName="title"
+              placeholder="e.g. Take a walk outside"
+              autocomplete="off"
+              required
+              [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+              [attr.aria-describedby]="
+                form.controls.title.touched && form.controls.title.invalid ? 'title-error' : null
+              "
+            />
+            <button class="add-button" type="submit">
+              <span aria-hidden="true">＋</span> Add task
+            </button>
+          </div>
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <p class="form-error" id="title-error" role="alert">
+              Give your task a title. Spaces alone don’t count.
+            </p>
+          }
+        </form>
+
+        @if (store.warning()) {
+          <div class="storage-warning" role="alert">
+            <strong>A note about saving</strong>
+            <p>{{ store.warning() }}</p>
+          </div>
+        }
+
+        <div class="list-heading">
+          <span>THE LITTLE THINGS ADD UP</span><span>{{ store.active() }} to go</span>
+        </div>
+        @if (store.total() === 0) {
+          <div class="empty-state">
+            <div class="empty-illustration" aria-hidden="true">
+              <div class="paper"><span>✓</span><i></i><i></i></div>
+              <span class="sparkle">✦</span>
+            </div>
+            <h3>A little list, a fresh start.</h3>
+            <p>Add your first task above.<br />Big plans start with small steps.</p>
+          </div>
+        } @else {
+          <ul class="task-list">
+            @for (task of store.tasks(); track task.id) {
+              <li [class.is-complete]="task.completed">
+                <label class="task-check"
+                  ><input
+                    type="checkbox"
+                    [checked]="task.completed"
+                    (change)="toggleTask(task)"
+                    [attr.aria-label]="
+                      'Mark ' + task.title + (task.completed ? ' incomplete' : ' complete')
+                    "
+                  /><span class="task-title">{{ task.title }}</span></label
+                >
+                <button
+                  class="delete-button"
+                  type="button"
+                  (click)="deleteTask(task)"
+                  [attr.aria-label]="'Delete ' + task.title"
+                  title="Delete task"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7" />
+                  </svg>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        <div class="list-footer">
+          <span aria-hidden="true">✓</span> A little progress is still progress.
+        </div>
+      </div>
+
+      <aside class="sidebar" aria-label="Task summary">
+        <section class="progress-card" aria-labelledby="progress-title">
+          <p class="eyebrow">YOUR MOMENTUM</p>
+          <h2 id="progress-title">Look at you go.</h2>
+          <dl class="counts" aria-live="polite" aria-atomic="true">
+            <div>
+              <dt>Total tasks</dt>
+              <dd>{{ store.total() }}</dd>
+            </div>
+            <div>
+              <dt><span class="count-dot active-dot" aria-hidden="true"></span>Active</dt>
+              <dd>{{ store.active() }}</dd>
+            </div>
+            <div>
+              <dt><span class="count-dot completed-dot" aria-hidden="true"></span>Completed</dt>
+              <dd>{{ store.completed() }}</dd>
+            </div>
+          </dl>
+          <div
+            class="progress-track"
+            role="progressbar"
+            aria-label="Tasks completed"
+            [attr.aria-valuenow]="store.completed()"
+            aria-valuemin="0"
+            [attr.aria-valuemax]="store.total() || 1"
+          >
+            <span
+              [style.width.%]="store.total() ? (store.completed() / store.total()) * 100 : 0"
+            ></span>
+          </div>
+          <p class="progress-caption">
+            {{
+              store.total() > 0 && store.active() === 0
+                ? 'All done. Enjoy a little breathing room.'
+                : 'Every checkmark is a small win.'
+            }}
+          </p>
+        </section>
+        <section class="privacy-card" aria-labelledby="privacy-title">
+          <span class="privacy-icon" aria-hidden="true">⌂</span>
+          <h2 id="privacy-title">At home in this browser.</h2>
+          <p>
+            Your tasks are saved only in this browser on this device. They don’t sync across
+            devices.
+          </p>
+          <p>No account. No cloud. Just your list.</p>
+          <p class="privacy-detail">
+            Clearing site data removes saved tasks. Private browsing may discard them when you close
+            it.
+          </p>
+        </section>
+      </aside>
+    </section>
+    <p class="sr-only" role="status">{{ announcement }}</p>
+  </main>
+  <footer class="site-footer">
+    <span>Made for the everyday.</span
+    ><span>Pocket Tasks <span aria-hidden="true">✦</span> Keep it simple.</span>
+  </footer>
+</div>
