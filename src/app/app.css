@@ -567,3 +567,55 @@ h2 {
     font-size: 11px;
   }
 }
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 0;
+  margin: 0;
+  padding: 0 28px 16px;
+}
+.filter-group legend {
+  float: left;
+  width: 100%;
+  padding: 0 0 8px;
+  font-size: 12px;
+}
+.filter-option {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+}
+.filter-option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+}
+.filter-option > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border: 1px solid #dfe3d7;
+  border-radius: 30px;
+  background: #fcfcf9;
+}
+.filter-option input:checked + span {
+  background: #2d583f;
+  color: #fff;
+}
+.filter-option input:focus-visible + span {
+  outline: 3px solid #1d4ed8;
+}
+.filter-empty {
+  margin: 0;
+  padding: 24px 28px 34px;
+  text-align: center;
+}
+@media (max-width: 760px) {
+  .filter-group {
+    padding: 0 22px 14px;
+  }
+}

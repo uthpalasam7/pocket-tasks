@@ -60,6 +60,25 @@
         <div class="list-heading">
           <span>THE LITTLE THINGS ADD UP</span><span>{{ store.active() }} to go</span>
         </div>
+        @if (store.total() > 0) {
+          <fieldset #filterGroup class="filter-group">
+            <legend>Show tasks</legend>
+            @for (option of filters; track option.value) {
+              <label class="filter-option">
+                <input
+                  type="radio"
+                  name="task-filter"
+                  [formControl]="filterControl"
+                  [value]="option.value"
+                  (change)="setFilterAnnouncement()"
+                />
+                <span
+                  >{{ option.label }} <span>{{ countFor(option.value) }}</span></span
+                >
+              </label>
+            }
+          </fieldset>
+        }
         @if (store.total() === 0) {
           <div class="empty-state">
             <div class="empty-illustration" aria-hidden="true">
@@ -69,9 +88,11 @@
             <h3>A little list, a fresh start.</h3>
             <p>Add your first task above.<br />Big plans start with small steps.</p>
           </div>
+        } @else if (visibleTasks().length === 0) {
+          <p class="filter-empty">No {{ filter() }} tasks.</p>
         } @else {
           <ul class="task-list">
-            @for (task of store.tasks(); track task.id) {
+            @for (task of visibleTasks(); track task.id) {
               <li [class.is-complete]="task.completed">
                 <label class="task-check"
                   ><input
