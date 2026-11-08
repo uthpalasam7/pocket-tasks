@@ -125,4 +125,93 @@ describe('Pocket Tasks interface', () => {
     expect(element.querySelector('.storage-warning')?.textContent).toContain('could not be saved');
     expect(element.querySelector('.task-title')?.textContent).toBe('Remember this tab');
   });
+
+  describe('filters', () => {
+    const saved = JSON.stringify({
+      version: 1,
+      tasks: [
+        { id: 'a', title: 'Alpha', completed: false },
+        { id: 'b', title: 'Bravo', completed: true },
+        { id: 'c', title: 'Charlie', completed: false },
+      ],
+    });
+
+    async function createWithSaved(): Promise<void> {
+      TestBed.resetTestingModule();
+      storage = memoryStorage();
+      storage.setItem(STORAGE_KEY, saved);
+      await TestBed.configureTestingModule({
+        imports: [App],
+        providers: [{ provide: TASK_STORAGE, useValue: () => storage }],
+      }).compileComponents();
+      fixture = TestBed.createComponent(App);
+      element = fixture.nativeElement as HTMLElement;
+      fixture.detectChanges();
+    }
+
+    function titles(): string[] {
+      return [...element.querySelectorAll('.task-title')].map((node) => node.textContent!);
+    }
+
+    function choose(label: string): void {
+      const radio = [...element.querySelectorAll<HTMLInputElement>('.filter-option input')].find(
+        (input) => input.closest('label')!.textContent!.trim().startsWith(label),
+      )!;
+      radio.click();
+      fixture.detectChanges();
+    }
+
+    it('hides the filter group until a task exists', () => {
+      expect(element.querySelector('.filter-group')).toBeNull();
+      add('First');
+      expect(element.querySelector('.filter-group')).not.toBeNull();
+    });
+
+    it('shows previously saved tasks under All and filters them without writing to storage', async () => {
+      await createWithSaved();
+      const write = vi.spyOn(storage, 'setItem');
+      expect(titles()).toEqual(['Alpha', 'Bravo', 'Charlie']);
+      choose('Active');
+      expect(titles()).toEqual(['Alpha', 'Charlie']);
+      choose('Completed');
+      expect(titles()).toEqual(['Bravo']);
+      choose('All');
+      expect(titles()).toEqual(['Alpha', 'Bravo', 'Charlie']);
+      expect(write).not.toHaveBeenCalled();
+      expect(storage.getItem(STORAGE_KEY)).toBe(saved);
+    });
+
+    it('labels the group and shows global counts on each option', async () => {
+      await createWithSaved();
+      expect(element.querySelector('.filter-group legend')?.textContent).toBe('Show tasks');
+      expect(
+        [...element.querySelectorAll('.filter-option')].map((l) => l.textContent!.trim()),
+      ).toEqual(['All 3', 'Active 2', 'Completed 1']);
+      choose('Completed');
+      expect([...element.querySelectorAll('dd')].map((n) => n.textContent)).toEqual([
+        '3',
+        '2',
+        '1',
+      ]);
+    });
+
+    it('keeps hidden tasks when toggling in a filtered view and moves focus to the filter', async () => {
+      await createWithSaved();
+      choose('Active');
+      element.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click();
+      fixture.detectChanges();
+      expect(titles()).toEqual(['Charlie']);
+      const stored = JSON.parse(storage.getItem(STORAGE_KEY)!).tasks;
+      expect(stored).toHaveLength(3);
+      expect(stored[0]).toMatchObject({ id: 'a', completed: true });
+      expect(document.activeElement).toBe(element.querySelector('.filter-option input:checked'));
+    });
+
+    it('shows a filtered empty message instead of the first-run empty state', () => {
+      add('Only one');
+      choose('Completed');
+      expect(element.querySelector('.filter-empty')?.textContent).toContain('No completed tasks.');
+      expect(element.querySelector('.empty-state')).toBeNull();
+    });
+  });
 });
